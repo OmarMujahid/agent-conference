@@ -7,12 +7,12 @@ description: Run a design conference of several agents (Codex Astra/Sol/Luna via
 
 Several models with different jobs answer the **same question sheet**, see each other's votes, and revote only on the splits. You (the orchestrator) prepare inputs, tally, and synthesize, and **the user rules on anything still split**.
 
-It's a Delphi process: independent answers, aggregated feedback, a fixed number of rounds. Why it's shaped this way:
-- **Votes before papers.** Long papers cost 6k lines to settle 26 questions; a vote sheet carries most of the value.
-- **Max two voting rounds.** Debate research shows disagreement collapses into agreement as rounds go on, and that convergence often tracks *worse* answers (sycophancy), not better ones. So convergence isn't proof. Leftover splits go to the user, not to a round 3.
+Rules:
+- **Votes before papers.** A vote sheet, not an essay.
+- **Max two voting rounds.** Agreement isn't proof. Leftover splits go to the user, not to a round 3.
 - **A changed vote must cite evidence.** "P2 convinced me" is not a reason; `brief-x §y` is.
-- **Feed back roles, not model names.** Panelists anchor on the best-known model; label them by role.
-- **Mixed models find different holes**, but a weak model in the voting pool can drag the result. Cheap models get side jobs (the persona, the tally), not votes.
+- **Feed back roles, not model names.**
+- **Cheap models get side jobs** (persona, tally), not votes.
 
 ## Cast (default; adjust to the question)
 
@@ -33,7 +33,7 @@ One folder per conference, e.g. `~/conferences/<topic>/`:
 ## Steps
 
 1. **Research pack.** The ask, constraints, corrections, and one brief per area (Explore/general agents). Every brief states which checkout/commit it read. A stale brief gets a correction line in the pack. Panelists cite `brief-x §y`.
-2. **Round 0, assumptions (cheap, short).** Each panelist writes ≤30 lines: "assumptions in this pack or the ask that I'd challenge". Merge them into `assumptions.md`. **Stop and show the user** and let them strike or confirm each one. This is where framing errors (e.g. a panelist designing for Cloud Run when the codebase is on Firebase Functions) get caught before they're inherited.
+2. **Round 0, assumptions (cheap, short).** Each panelist writes ≤30 lines: "assumptions in this pack or the ask that I'd challenge". Merge them into `assumptions.md`. **Stop and show the user** and let them strike or confirm each one. Framing errors get caught here, before every panelist inherits them.
 3. **Write `questions.md`.** 15–30 questions grouped by area. Each has concrete options and an ID (A1, B3…). Show it to the user before round 1.
 4. **Round 1, independent.** Each panelist writes `r1-<role>.md` without seeing the others: vote sheet (≤6 words + ≤2 lines + citation per question), ≤150 lines of role-specific proposal, open questions, and "the hill I'd die on" (ranked).
 5. **Tally 1.** Moderator turns the vote sheets into `tally-1.md`: one row per question, one column per role, marked **AGREED** (all, or all but one with no hill on it) or **SPLIT**, plus every hill.

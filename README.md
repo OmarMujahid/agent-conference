@@ -12,26 +12,18 @@ research pack → round 0: assumptions → you rule
              → synthesis → fidelity check → persona reaction
 ```
 
-## Why it's shaped this way
+## How it works
 
-The first version of this was a free-form "conference": four models wrote position papers, read each other's work, and wrote rebuttals. It worked, but:
-
-| What went wrong | What the skill does instead |
-|---|---|
-| ~6,000 lines of papers to settle 26 questions | **Questions first, votes first.** A vote is ≤6 words + 2 lines + a citation. |
-| Every panelist inherited the first paper's framing (a wrong runtime assumption no one questioned) | **Round 0**: each panelist lists assumptions to attack *before* anyone proposes anything. A human rules on them. |
-| Synthesis by one model after reading 8 papers lost detail (7 errors) | A **moderator** turns votes into a table; synthesis starts from the table. A **fidelity check** sends the synthesis back to every panelist. |
-| The orchestrator spent hours waiting on a broken polling loop | A **wrapper** that launches Codex runs detached and waits on an exit file, never a pid or `pgrep` (see [docs/waiting-for-detached-runs.md](docs/waiting-for-detached-runs.md)). |
-| Nobody spoke for the end user | A cheap model plays a **persona** (labeled *simulated*, no vote). |
-
-Research behind the rules:
-
-- **Max two voting rounds, and agreement isn't proof.** In multi-agent debate, disagreement collapses as rounds go on, and that convergence often tracks *worse* answers because agents defer to each other ([Yao et al. 2025](https://arxiv.org/abs/2509.23055v1); [CONSENSAGENT, ACL Findings 2025](https://preview.aclanthology.org/new-sigs/2025.findings-acl.1141/)). Leftover splits go to the human, not to a round 3.
-- **A changed vote must cite evidence.** "Another panelist argued well" doesn't count.
-- **Debate is not magic.** It often fails to beat simpler baselines for the compute it uses ([Cui et al.](https://arxiv.org/abs/2502.08788v3)). The value here is *different blind spots* plus *structured human decisions*, not the debate itself.
-- **Mixed models help, but weak voters drag.** Mixing model families finds different holes; mixed results show weaker agents can hurt the group ([M3MAD-Bench](https://arxiv.org/pdf/2601.02854)). Cheap models get side jobs (tally, persona), not votes.
-- **Panelists are labeled by role, not by model**, to reduce anchoring on the best-known model (as in [Language Model Council](https://arxiv.org/abs/2406.08598v4)).
-- The round structure is borrowed from Delphi, which has been run with LLM panels ([Scalable Delphi, 2026](https://arxiv.org/html/2602.08889v1)).
+- **Panelists** are models with different jobs (e.g. architecture, quality, red team, user advocate). They mix Claude subagents and Codex CLI agents, so they have different blind spots.
+- **Votes, not essays.** Every panelist answers the same question sheet: a vote of ≤6 words, 2 lines of reason, and a citation into the research pack (`brief-x §y`).
+- **Round 0 attacks the framing.** Before anyone proposes a design, each panelist lists the assumptions it doubts. You rule on them.
+- **Round 1 is independent.** Panelists don't see each other's answers.
+- **A moderator tallies.** A cheap model turns the votes into a table: each question is AGREED or SPLIT, plus each panelist's "hill I'd die on".
+- **Round 2 covers the splits only.** Panelists read the tally and the others' answers, then revote. A changed vote must cite evidence; "another panelist argued well" doesn't count.
+- **Two voting rounds, max.** Anything still split goes to you, not to a third round.
+- **Panelists are labeled by role, not by model.**
+- **Fidelity check.** The synthesis goes back to every panelist: "quote every line that contradicts your votes, your hills, or the evidence".
+- **Persona.** A cheap model reacts as the end user, labeled *simulated*. It doesn't vote.
 
 ## Requirements
 
@@ -66,7 +58,7 @@ Claude will:
 4. **Run rounds 1 and 2** and the tallies, then show you the remaining splits with each side's best evidence. **You rule.**
 5. **Write `synthesis.md`**, run the fidelity check, fix what holds up, and add the persona reaction.
 
-You are asked at four points only: after round 0, after the question sheet, on the final splits, and at the end.
+You're asked at four points only: after round 0, after the question sheet, on the final splits, and at the end.
 
 ### Running Codex panelists by hand
 
@@ -95,13 +87,12 @@ bin/codex-conference.sh         launch / wait / status for detached Codex runs
 docs/waiting-for-detached-runs.md   the polling bugs this avoids
 ```
 
-## Tips from real runs
+## Tips
 
-- **Spend the effort on the research pack.** When every claim cites `brief-x §y`, you can check claims, and panelists stay grounded.
-- **Ask each brief to state which commit it read.** One stale checkout poisoned a whole brief in the first run.
-- **"The hill I'd die on"** is the most useful section: it makes each panelist rank its own objections.
-- **Round 0 may end the conference early.** In one run, all four panelists independently showed the core premise rested on a single 3-sample test. The right next step was a small experiment, not two more rounds.
-- Budget: a 4-panelist run with a frontier model at high effort takes 30–60 minutes per round on a large research pack.
+- **Spend the effort on the research pack.** When every claim cites `brief-x §y`, claims can be checked, and panelists stay grounded.
+- **Have each brief state which commit or version it read.** Correct stale briefs in `00-research-pack.md`.
+- **Round 0 can end the conference early.** If the panelists show the premise is unproven, the right next step may be a small experiment, not more rounds.
+- **Budget:** with a frontier model at high effort and a large research pack, expect 30–60 minutes per round.
 
 ## License
 

@@ -1,6 +1,6 @@
 # Waiting for a detached run (from an agent's shell)
 
-Long `codex exec` runs outlive an agent's tool timeout, so they get launched detached and waited on. Three common ways to wait are broken. All three cost real hours.
+Long `codex exec` runs outlive an agent's tool timeout, so they get launched detached and waited on. Three common ways to wait are broken.
 
 ## 1. `pgrep -f "<command text>"` never finishes
 
@@ -18,7 +18,7 @@ echo $! > run.pid
 kill -0 "$(cat run.pid)" && echo RUNNING || echo DONE      # says DONE at once
 ```
 
-Agent shells often run with job control on (`set -m`; check `echo $-` for an `m`). A backgrounded job then leads its own process group, and `setsid` forks when it's a group leader. `$!` is the pid of the `setsid` that already exited, not of codex. Under a plain `bash -c` the same code works, which is why this slips through testing.
+Agent shells often run with job control on (`set -m`; check `echo $-` for an `m`). A backgrounded job then leads its own process group, and `setsid` forks when it's a group leader. `$!` is the pid of the `setsid` that already exited, not of codex. Under a plain `bash -c` the same code works.
 
 **Fix:** `setsid -w` waits for its child, so `$!` stays alive exactly as long as the run.
 
