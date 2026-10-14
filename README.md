@@ -1,6 +1,6 @@
 # agent-conference
 
-A [Claude Code](https://claude.com/claude-code) skill that runs a **design conference between several AI models**, using Claude subagents and OpenAI Codex CLI agents together, to settle a hard design question that has many open decisions.
+A [Claude Code](https://claude.com/claude-code) skill that runs a **design conference between several AI models**, using Claude subagents, optionally mixed with OpenAI Codex CLI agents, to settle a hard design question that has many open decisions.
 
 It runs as a **Delphi process** instead of an open-ended debate:
 
@@ -14,7 +14,7 @@ research pack → round 0: assumptions → you rule
 
 ## How it works
 
-- **Panelists** are models with different jobs (e.g. architecture, quality, red team, user advocate). They mix Claude subagents and Codex CLI agents, so they have different blind spots.
+- **Panelists** are models with different jobs (e.g. architecture, quality, red team, user advocate). They can be all Claude subagents, or mixed with Codex CLI agents for more varied blind spots.
 - **Votes, not essays.** Every panelist answers the same question sheet: a vote of ≤6 words, 2 lines of reason, and a citation into the research pack (`brief-x §y`).
 - **Round 0 attacks the framing.** Before anyone proposes a design, each panelist lists the assumptions it doubts. You rule on them.
 - **Round 1 is independent.** Panelists don't see each other's answers.
@@ -28,10 +28,23 @@ research pack → round 0: assumptions → you rule
 ## Requirements
 
 - [Claude Code](https://docs.claude.com/en/docs/claude-code) (the orchestrator, plus Claude subagents as panelists)
-- [OpenAI Codex CLI](https://github.com/openai/codex) (`codex exec`), logged in, for the Codex panelists
-- bash, coreutils, `setsid`, `timeout` (Linux; on macOS install `util-linux` and `coreutils`)
+- **Optional:** [OpenAI Codex CLI](https://github.com/openai/codex) (`codex exec`), logged in, for Codex panelists. That also needs bash, `setsid` and `timeout` (Linux; on macOS install `util-linux` and `coreutils`).
 
-The default cast uses `gpt-6-astra`, `gpt-6-sol` and `gpt-6-luna` on the Codex side and Opus/Fable on the Claude side. Change the cast table in `SKILL.md` to whatever you have.
+## Two setups
+
+| Setup | Needs | Panelists |
+|---|---|---|
+| **Claude only** | Claude Code | Opus, Sonnet and Fable vote; Haiku tallies and plays the persona |
+| **Mixed** | Claude Code + Codex CLI | Codex `gpt-6-astra` plus Claude Opus/Fable vote; `gpt-6-sol` tallies; `gpt-6-luna` plays the persona |
+
+The skill picks **mixed** when `codex` is installed, and **Claude only** otherwise. To force one, say so: *"run a conference, Claude subagents only"*.
+
+**Claude only** is simpler: every panelist is a background subagent, nothing to poll, no wrapper script. The trade-off is more shared blind spots, since every panelist is from one model family. The skill makes up for that by:
+- putting a different model in each voting seat
+- giving each role its own evidence lane (e.g. the red team cites code only)
+- asking for more assumptions in round 0
+
+Edit the cast tables in `SKILL.md` to match the models you have.
 
 ## Install
 
@@ -39,10 +52,10 @@ The default cast uses `gpt-6-astra`, `gpt-6-sol` and `gpt-6-luna` on the Codex s
 git clone https://github.com/OmarMujahid/agent-conference.git
 mkdir -p ~/.claude/skills ~/.local/bin
 cp -r agent-conference/skills/conference ~/.claude/skills/
-cp agent-conference/bin/codex-conference.sh ~/.local/bin/ && chmod +x ~/.local/bin/codex-conference.sh
+cp agent-conference/bin/codex-conference.sh ~/.local/bin/ && chmod +x ~/.local/bin/codex-conference.sh   # mixed setup only
 ```
 
-Make sure `~/.local/bin` is on your `PATH`. Restart Claude Code; the skill shows up as `conference`.
+For the mixed setup, make sure `~/.local/bin` is on your `PATH`. Restart Claude Code; the skill shows up as `conference`.
 
 ## Use
 
@@ -60,7 +73,7 @@ Claude will:
 
 You're asked at four points only: after round 0, after the question sheet, on the final splits, and at the end.
 
-### Running Codex panelists by hand
+### Running Codex panelists by hand (mixed setup)
 
 ```bash
 codex-conference.sh launch -d ~/conferences/queue -r architecture \
@@ -83,7 +96,7 @@ Claude panelists run as background subagents and write their own files; their co
 ```
 skills/conference/SKILL.md      the process, cast, checkpoints
 skills/conference/TEMPLATES.md  prompts for every round (header, round 0/1/2, moderator, fidelity, persona)
-bin/codex-conference.sh         launch / wait / status for detached Codex runs
+bin/codex-conference.sh         launch / wait / status for detached Codex runs (mixed setup only)
 docs/waiting-for-detached-runs.md   the polling bugs this avoids
 ```
 

@@ -1,6 +1,6 @@
 ---
 name: conference
-description: Run a design conference of several agents (Codex Astra/Sol/Luna via CLI plus Claude subagents) to settle a hard design question with many open decisions. Research pack → assumptions round → independent votes → moderator tally → revote on splits only → synthesis → fidelity check, plus a cheap customer-persona reaction. Use when the user asks for a conference, panel, debate, red team + design round, or "get several models to argue this out". Not for code review (codex-review) or quick lookups (codex).
+description: Run a design conference of several agents (Claude subagents, optionally mixed with Codex CLI agents) to settle a hard design question with many open decisions. Research pack → assumptions round → independent votes → moderator tally → revote on splits only → synthesis → fidelity check, plus a cheap customer-persona reaction. Use when the user asks for a conference, panel, debate, red team + design round, or "get several models to argue this out". Not for code review (codex-review) or quick lookups (codex).
 ---
 
 # Agent conference
@@ -14,7 +14,11 @@ Rules:
 - **Feed back roles, not model names.**
 - **Cheap models get side jobs** (persona, tally), not votes.
 
-## Cast (default; adjust to the question)
+## Cast (adjust to the question)
+
+Two setups. Use **mixed** when `codex` is installed and logged in (`codex --version`); otherwise use **Claude only**.
+
+**Mixed (Claude + Codex)**
 
 | Role | Runs on | How |
 |---|---|---|
@@ -24,6 +28,22 @@ Rules:
 | red team | Claude Fable subagent | Agent tool |
 | moderator (tally only) | Codex `gpt-6-sol`, low | wrapper |
 | customer persona (no vote) | Codex `gpt-6-luna`, low | wrapper |
+
+**Claude only**
+
+| Role | Runs on | How |
+|---|---|---|
+| architecture | Claude Opus subagent | Agent tool |
+| ux / customer empathy | Claude Sonnet subagent | Agent tool |
+| quality / domain | Claude Fable subagent | Agent tool |
+| red team | Claude Opus subagent | Agent tool |
+| moderator (tally only) | Claude Haiku subagent | Agent tool |
+| customer persona (no vote) | Claude Haiku subagent | Agent tool |
+
+One model family means more shared blind spots. To make up for it:
+- **Give each voting seat a different model** where you can, and never two seats the same role.
+- **Give each role its own evidence lane.** For example, the red team cites code only and quality cites the external research only. Different inputs produce different objections.
+- **Take round 0 seriously.** Ask every panelist for at least 3 assumptions that the briefs themselves take for granted.
 
 ## Folder
 
@@ -41,7 +61,7 @@ One folder per conference, e.g. `~/conferences/<topic>/`:
 7. **User rules** on what's still SPLIT. Show it as a table with each side's best evidence. No round 3.
 8. **Synthesis.** You write `synthesis.md` from `tally-2.md` plus the rulings. Go back to the papers only for detail a decision needs.
 9. **Fidelity check (always, not improvised).** Each panelist gets the synthesis: "quote every line that contradicts your votes, your hills, or a brief". Fix what holds up.
-10. **Persona reaction.** Luna plays the end customer (e.g. a salon owner in Jeddah) and reacts to the user-facing parts. Label its output **simulated**. It catches jargon and confusing steps; it is not user research.
+10. **Persona reaction.** A cheap model (Luna or Haiku) plays the end customer (e.g. a salon owner in Jeddah) and reacts to the user-facing parts. Label its output **simulated**. It catches jargon and confusing steps; it is not user research.
 
 Prompt templates for each step: `TEMPLATES.md` in this folder.
 
@@ -63,9 +83,11 @@ codex-conference.sh wait -d ~/conferences/x -t 540
 - Never wait with `pgrep -f`, a bare `setsid` pid, or file size (see `docs/waiting-for-detached-runs.md` in the repo).
 - Timeout per run: `CONF_TIMEOUT` (default 3600s). Astra at high on a big pack can take 30–60 minutes.
 
-**Claude** (Opus/Fable): use the Agent tool with `model` set, run in the background, and tell it the exact output path to write. Completion arrives as a notification, so no polling is needed.
+**Claude** (Opus/Sonnet/Fable/Haiku): use the Agent tool with `model` set, run in the background, and tell it the exact output path to write. Completion arrives as a notification, so no polling is needed.
 
-Launch every panelist of a round in one turn, then wait for codex while the Claude notifications arrive.
+Launch every panelist of a round in one turn, then wait for codex while the Claude notifications arrive. Claude only: launch them all in the background in one turn and wait for the notifications. `codex-conference.sh` isn't needed.
+
+Moderator and persona as Claude subagents: same Agent call, with `model` set to Haiku. Give the moderator only the files it tallies, and tell it to write `tally-N.md`.
 
 ## Checkpoints with the user
 

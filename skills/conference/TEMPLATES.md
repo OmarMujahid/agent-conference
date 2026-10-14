@@ -42,7 +42,7 @@ Up to 3, with options.
 Rank your objections; the top 1–2 are your hills, with evidence.
 ```
 
-## Moderator — tally (Sol, low effort)
+## Moderator — tally (Sol at low effort, or Haiku)
 
 ```
 You are a vote counter, not a designer. Do not add opinions.
@@ -79,7 +79,7 @@ Format: `> quoted line` then `WRONG BECAUSE: <citation>`.
 If none: output exactly NO CONTRADICTIONS.
 ```
 
-## Persona reaction (Luna, low effort, no vote)
+## Persona reaction (Luna at low effort, or Haiku; no vote)
 
 ```
 You are <PERSONA: e.g. the owner of a small women's salon in Jeddah, runs bookings on WhatsApp, Arabic-first, not technical, busy, sceptical of tools that waste time>.
